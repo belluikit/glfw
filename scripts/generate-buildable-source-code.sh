@@ -2,7 +2,7 @@
 
 # Regenerate the vendored GLFW C sources at the repository root.
 #
-# This fork (module github.com/trendvidia/glfw) flattens the upstream go-gl
+# This fork (module github.com/belluikit/glfw) flattens the upstream go-gl
 # v3.x/glfw/glfw layout: the C tree lives in ./glfw and the binding package is
 # the repository root, so this script no longer takes a target-directory
 # argument.
@@ -146,7 +146,7 @@ GLFW_DIR="$REPO_ROOT/glfw"
 rm -rf "$GLFW_DIR"
 mv "$AGGREGATE_DIR" "$GLFW_DIR"
 
-generate_dummy_go_files "$GLFW_DIR" "github.com/trendvidia/glfw/glfw/deps"
+generate_dummy_go_files "$GLFW_DIR" "github.com/belluikit/glfw/glfw/deps"
 
 # Record the revision the tree was regenerated from.
 printf '%s\n' "$GLFW_REVISION" > "$REVISION_FILE"

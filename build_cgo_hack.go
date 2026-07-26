@@ -13,7 +13,7 @@ package glfw
 //  - this file is given a build to exclude it from the regular build.
 import (
 	// Prevent go tooling from stripping out the c source files.
-	_ "github.com/trendvidia/glfw/glfw/deps"
-	_ "github.com/trendvidia/glfw/glfw/include/GLFW"
-	_ "github.com/trendvidia/glfw/glfw/src"
+	_ "github.com/belluikit/glfw/glfw/deps"
+	_ "github.com/belluikit/glfw/glfw/include/GLFW"
+	_ "github.com/belluikit/glfw/glfw/src"
 )

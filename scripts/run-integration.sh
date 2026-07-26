@@ -20,7 +20,7 @@ set -euo pipefail
 
 BACKEND="${GLFW_TEST_BACKEND:-wayland}"
 COVERPROFILE="${COVERPROFILE:-cover.out}"
-PKG="github.com/trendvidia/glfw"
+PKG="github.com/belluikit/glfw"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 pids=()

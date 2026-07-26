@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"runtime"
 
-	"github.com/trendvidia/glfw"
+	"github.com/belluikit/glfw"
 )
 
 func init() {

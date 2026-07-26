@@ -1,13 +1,13 @@
-[![Tests](https://github.com/trendvidia/glfw/actions/workflows/tests.yml/badge.svg)](https://github.com/trendvidia/glfw/actions/workflows/tests.yml)
-[![Static Analysis](https://github.com/trendvidia/glfw/actions/workflows/analysis.yml/badge.svg)](https://github.com/trendvidia/glfw/actions/workflows/analysis.yml)
-[![GoDoc](https://pkg.go.dev/badge/github.com/trendvidia/glfw.svg)](https://pkg.go.dev/github.com/trendvidia/glfw)
+[![Tests](https://github.com/belluikit/glfw/actions/workflows/tests.yml/badge.svg)](https://github.com/belluikit/glfw/actions/workflows/tests.yml)
+[![Static Analysis](https://github.com/belluikit/glfw/actions/workflows/analysis.yml/badge.svg)](https://github.com/belluikit/glfw/actions/workflows/analysis.yml)
+[![GoDoc](https://pkg.go.dev/badge/github.com/belluikit/glfw.svg)](https://pkg.go.dev/github.com/belluikit/glfw)
 
 # GLFW 3.4 for Go (trendvidia fork)
 
 This is a fork of [go-gl/glfw](https://github.com/go-gl/glfw) that adds IME /
 preedit support (ported from the unmerged upstream PR
 [glfw/glfw#2130](https://github.com/glfw/glfw/pull/2130)). The module is
-imported as `github.com/trendvidia/glfw` (the upstream `v3.4/glfw`
+imported as `github.com/belluikit/glfw` (the upstream `v3.4/glfw`
 subdirectory layout is flattened to the repository root).
 
 ## Installation
@@ -23,7 +23,7 @@ subdirectory layout is flattened to the repository root).
 * Go 1.4+ is required on Windows (otherwise you must use MinGW v4.8.1 exactly, see [Go issue 8811](https://github.com/golang/go/issues/8811)).
 
 ```
-go get github.com/trendvidia/glfw
+go get github.com/belluikit/glfw
 ```
 
 ### OpenGL ES
@@ -32,7 +32,7 @@ If your target system only provides an OpenGL ES implementation (true for some A
 You do this by defining the appropriate build tags, e.g.
 
 ```
-go get -tags=gles2 github.com/trendvidia/glfw
+go get -tags=gles2 github.com/belluikit/glfw
 ```
 
 Supported tags are `gles1`, `gles2`, `gles3` and `vulkan`.
@@ -45,7 +45,7 @@ package main
 
 import (
 	"runtime"
-	"github.com/trendvidia/glfw"
+	"github.com/belluikit/glfw"
 )
 
 func init() {

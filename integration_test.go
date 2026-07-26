@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	glfw "github.com/trendvidia/glfw"
+	glfw "github.com/belluikit/glfw"
 )
 
 // ---------------------------------------------------------------------------
