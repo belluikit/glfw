@@ -1213,19 +1213,32 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
             if (!window->callbacks.touch)
                 break;
-            if (!GetPointerType || !GetPointerType(pointerId, &pointerType))
-                break;
-            if (pointerType != GLFW_WIN32_PT_TOUCH)
+            if (!GetPointerType)
                 break;
 
             if (uMsg == WM_POINTERCAPTURECHANGED)
             {
                 // The system took the pointer over (e.g. as a gesture); no
-                // position accompanies the message
+                // position accompanies the message. The type lookup may
+                // already fail here for a pointer that is gone — deliver the
+                // CANCEL anyway then, or a touch point the client saw begin
+                // would be stuck forever (unknown ids must be tolerated, see
+                // glfwSetTouchCallback)
+                if (GetPointerType(pointerId, &pointerType) &&
+                    pointerType != GLFW_WIN32_PT_TOUCH)
+                {
+                    break;
+                }
+
                 _glfwInputTouch(window, (int) pointerId, GLFW_TOUCH_CANCEL,
                                 0.0, 0.0);
                 return 0;
             }
+
+            if (!GetPointerType(pointerId, &pointerType))
+                break;
+            if (pointerType != GLFW_WIN32_PT_TOUCH)
+                break;
 
             // Hover updates of touch devices that report proximity carry no
             // contact; leave them to default processing

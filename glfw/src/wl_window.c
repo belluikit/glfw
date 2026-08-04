@@ -2181,8 +2181,19 @@ static void seatHandleCapabilities(void* userData,
         wl_touch_destroy(_glfw.wl.touch);
         _glfw.wl.touch = NULL;
 
+        // No further wl_touch events will arrive for points already down;
+        // cancel them so clients do not keep them active forever
         for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+        {
+            if (!_glfw.wl.touchPoints[i].inUse)
+                continue;
+
             _glfw.wl.touchPoints[i].inUse = GLFW_FALSE;
+            _glfwInputTouch(_glfw.wl.touchPoints[i].window,
+                            _glfw.wl.touchPoints[i].id, GLFW_TOUCH_CANCEL,
+                            _glfw.wl.touchPoints[i].x,
+                            _glfw.wl.touchPoints[i].y);
+        }
     }
 }
 

@@ -5904,6 +5904,14 @@ GLFWAPI GLFWdragfun glfwSetDragCallback(GLFWwindow* window, GLFWdragfun callback
  *  Events are delivered as the platform reports them; a multi-touch frame
  *  arrives as one callback call per touch point.
  *
+ *  Setting or removing the callback while touch points are down truncates
+ *  their sequences: a point already down when the callback is set reports
+ *  moves and its end without a preceding `GLFW_TOUCH_BEGIN`, and a point
+ *  down when the callback is removed never reports an end. A rare
+ *  system-side cancellation may likewise carry an id that never began. The
+ *  callback must tolerate ids it has not seen begin (typically by ignoring
+ *  them).
+ *
  *  @param[in] window The window whose callback to set.
  *  @param[in] callback The new touch callback, or `NULL` to remove the
  *  currently set callback.

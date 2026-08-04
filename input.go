@@ -867,6 +867,13 @@ type TouchCallback func(w *Window, touchID int, phase TouchPhase, x, y float64)
 // the system's legacy mouse emulation for them — including tap-to-left-click
 // and the press-and-hold promotion to right-click; pass nil to restore the
 // legacy behavior. On Wayland, touches previously did nothing at all.
+//
+// Setting or removing the callback while touch points are down truncates
+// their sequences: a point already down when the callback is set reports
+// moves and its end without a preceding TouchBegin, and a point down when
+// the callback is removed never reports an end. A rare system-side
+// cancellation may likewise carry an id that never began. The callback must
+// tolerate ids it has not seen begin (typically by ignoring them).
 func (w *Window) SetTouchCallback(cbfun TouchCallback) (previous TouchCallback) {
 	previous = w.fTouchHolder
 	w.fTouchHolder = cbfun
