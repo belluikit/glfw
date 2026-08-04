@@ -463,6 +463,16 @@ void _glfwInputDrag(_GLFWwindow* window, int phase, double xpos, double ypos)
         window->callbacks.drag((GLFWwindow*) window, phase, xpos, ypos);
 }
 
+// Notifies shared code of a touch event (belluikit/glfw#1)
+//
+void _glfwInputTouch(_GLFWwindow* window, int touchID, int phase, double xpos, double ypos)
+{
+    assert(window != NULL);
+
+    if (window->callbacks.touch)
+        window->callbacks.touch((GLFWwindow*) window, touchID, phase, xpos, ypos);
+}
+
 // Notifies shared code of a joystick connection or disconnection
 //
 void _glfwInputJoystick(_GLFWjoystick* js, int event)
@@ -1175,6 +1185,16 @@ GLFWAPI GLFWdragfun glfwSetDragCallback(GLFWwindow* handle, GLFWdragfun cbfun)
 
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
     _GLFW_SWAP(GLFWdragfun, window->callbacks.drag, cbfun);
+    return cbfun;
+}
+
+GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* handle, GLFWtouchfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP(GLFWtouchfun, window->callbacks.touch, cbfun);
     return cbfun;
 }
 

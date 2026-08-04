@@ -121,6 +121,35 @@
  #define OCR_HAND 32649
 #endif
 
+// Windows 8+ pointer (touch) messages and helpers, absent from SDK headers
+// targeting older Windows versions (belluikit/glfw#1); values from winuser.h.
+// GetPointerType is loaded dynamically so Windows 7 still runs (touch then
+// keeps its legacy mouse-emulated behavior).
+#ifndef WM_POINTERUPDATE
+ #define WM_POINTERUPDATE 0x0245
+#endif
+#ifndef WM_POINTERDOWN
+ #define WM_POINTERDOWN 0x0246
+#endif
+#ifndef WM_POINTERUP
+ #define WM_POINTERUP 0x0247
+#endif
+#ifndef WM_POINTERCAPTURECHANGED
+ #define WM_POINTERCAPTURECHANGED 0x024C
+#endif
+#ifndef GET_POINTERID_WPARAM
+ #define GET_POINTERID_WPARAM(w) (LOWORD(w))
+#endif
+#ifndef POINTER_MESSAGE_FLAG_INCONTACT
+ #define POINTER_MESSAGE_FLAG_INCONTACT 0x0004
+#endif
+#ifndef IS_POINTER_INCONTACT_WPARAM
+ #define IS_POINTER_INCONTACT_WPARAM(w) \
+    (((DWORD) HIWORD(w)) & POINTER_MESSAGE_FLAG_INCONTACT)
+#endif
+// PT_TOUCH from the POINTER_INPUT_TYPE enum, which cannot be #ifndef-guarded
+#define GLFW_WIN32_PT_TOUCH 2
+
 #if WINVER < 0x0601
 typedef struct
 {
@@ -292,6 +321,8 @@ typedef BOOL (WINAPI * PFN_SetProcessDpiAwarenessContext)(HANDLE);
 typedef UINT (WINAPI * PFN_GetDpiForWindow)(HWND);
 typedef BOOL (WINAPI * PFN_AdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 typedef int (WINAPI * PFN_GetSystemMetricsForDpi)(int,UINT);
+// DWORD* stands in for POINTER_INPUT_TYPE*, missing from older SDK headers
+typedef BOOL (WINAPI * PFN_GetPointerType)(UINT32,DWORD*);
 #define SetProcessDPIAware _glfw.win32.user32.SetProcessDPIAware_
 #define ChangeWindowMessageFilterEx _glfw.win32.user32.ChangeWindowMessageFilterEx_
 #define EnableNonClientDpiScaling _glfw.win32.user32.EnableNonClientDpiScaling_
@@ -299,6 +330,7 @@ typedef int (WINAPI * PFN_GetSystemMetricsForDpi)(int,UINT);
 #define GetDpiForWindow _glfw.win32.user32.GetDpiForWindow_
 #define AdjustWindowRectExForDpi _glfw.win32.user32.AdjustWindowRectExForDpi_
 #define GetSystemMetricsForDpi _glfw.win32.user32.GetSystemMetricsForDpi_
+#define GetPointerType _glfw.win32.user32.GetPointerType_
 
 // dwmapi.dll function pointer typedefs
 typedef HRESULT (WINAPI * PFN_DwmIsCompositionEnabled)(BOOL*);
@@ -517,6 +549,7 @@ typedef struct _GLFWlibraryWin32
         PFN_GetDpiForWindow             GetDpiForWindow_;
         PFN_AdjustWindowRectExForDpi    AdjustWindowRectExForDpi_;
         PFN_GetSystemMetricsForDpi      GetSystemMetricsForDpi_;
+        PFN_GetPointerType              GetPointerType_;
     } user32;
 
     struct {

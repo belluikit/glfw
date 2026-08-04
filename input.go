@@ -13,6 +13,7 @@ package glfw
 //void glfwSetScrollCallbackCB(GLFWwindow *window);
 //void glfwSetDropCallbackCB(GLFWwindow *window);
 //void glfwSetDragCallbackCB(GLFWwindow *window);
+//void glfwSetTouchCallbackCB(GLFWwindow *window);
 //void glfwSetPreeditCallbackCB(GLFWwindow *window);
 //void glfwSetIMEStatusCallbackCB(GLFWwindow *window);
 //float GetAxisAtIndex(float *axis, int i);
@@ -398,6 +399,12 @@ func goDropCB(window unsafe.Pointer, count C.int, names **C.char) { // TODO: The
 func goDragCB(window unsafe.Pointer, phase C.int, xpos C.double, ypos C.double) {
 	w := windows.get((*C.GLFWwindow)(window))
 	w.fDragHolder(w, DragPhase(phase), float64(xpos), float64(ypos))
+}
+
+//export goTouchCB
+func goTouchCB(window unsafe.Pointer, touchID C.int, phase C.int, xpos C.double, ypos C.double) {
+	w := windows.get((*C.GLFWwindow)(window))
+	w.fTouchHolder(w, int(touchID), TouchPhase(phase), float64(xpos), float64(ypos))
 }
 
 //export goPreeditCB
@@ -818,6 +825,55 @@ func (w *Window) SetDragCallback(cbfun DragCallback) (previous DragCallback) {
 		C.glfwSetDragCallback(w.data, nil)
 	} else {
 		C.glfwSetDragCallbackCB(w.data)
+	}
+	panicError()
+	return previous
+}
+
+// TouchPhase is the stage of a touch event reported to a TouchCallback
+// (a belluikit/glfw extension, belluikit/glfw#1).
+type TouchPhase int
+
+const (
+	// TouchBegin reports that a touch point has been placed on the window's
+	// content area.
+	TouchBegin TouchPhase = C.GLFW_TOUCH_BEGIN
+	// TouchMove reports that a touch point has moved within the window's
+	// content area.
+	TouchMove TouchPhase = C.GLFW_TOUCH_MOVE
+	// TouchEnd reports that a touch point has been lifted.
+	TouchEnd TouchPhase = C.GLFW_TOUCH_END
+	// TouchCancel reports that the system took the touch sequence over (e.g.
+	// as a global gesture); the touch point must be discarded without acting
+	// on it.
+	TouchCancel TouchPhase = C.GLFW_TOUCH_CANCEL
+)
+
+// TouchCallback is the touch callback. touchID identifies the touch point
+// among those currently down (it may be reused after TouchEnd/TouchCancel);
+// x and y are content-area coordinates. On TouchCancel they are the last
+// known position, or 0 where the platform does not report one. See
+// SetTouchCallback.
+type TouchCallback func(w *Window, touchID int, phase TouchPhase, x, y float64)
+
+// SetTouchCallback sets the touch callback, which reports touchscreen
+// contacts on the window's content area independently of the emulated mouse —
+// a belluikit/glfw extension (belluikit/glfw#1). Touch is delivered on
+// Windows (WM_POINTER) and Wayland (wl_touch); elsewhere the callback simply
+// never fires (on X11 touch continues to arrive as an emulated mouse).
+//
+// Setting a callback deliberately changes platform behavior: on Windows,
+// touches are consumed as touch events while a callback is set, suppressing
+// the system's legacy mouse emulation for them — including tap-to-left-click
+// and the press-and-hold promotion to right-click; pass nil to restore the
+// legacy behavior. On Wayland, touches previously did nothing at all.
+func (w *Window) SetTouchCallback(cbfun TouchCallback) (previous TouchCallback) {
+	previous = w.fTouchHolder
+	w.fTouchHolder = cbfun
+	if cbfun == nil {
+		C.glfwSetTouchCallback(w.data, nil)
+	} else {
+		C.glfwSetTouchCallbackCB(w.data)
 	}
 	panicError()
 	return previous

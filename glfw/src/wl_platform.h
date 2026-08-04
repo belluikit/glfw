@@ -329,6 +329,10 @@ typedef void (* PFN_libdecor_state_free)(struct libdecor_state*);
 #define libdecor_state_new _glfw.wl.libdecor.libdecor_state_new_
 #define libdecor_state_free _glfw.wl.libdecor.libdecor_state_free_
 
+// Maximum simultaneously tracked touch points (belluikit/glfw#1); touch
+// hardware reports at most ten, further downs are ignored until a slot frees
+#define GLFW_WL_MAX_TOUCH_POINTS 16
+
 typedef struct _GLFWfallbackEdgeWayland
 {
     struct wl_surface*          surface;
@@ -449,6 +453,7 @@ typedef struct _GLFWlibraryWayland
     struct wl_seat*             seat;
     struct wl_pointer*          pointer;
     struct wl_keyboard*         keyboard;
+    struct wl_touch*            touch;
     struct wl_data_device_manager*          dataDeviceManager;
     struct wl_data_device*      dataDevice;
     struct xdg_wm_base*         wmBase;
@@ -555,6 +560,17 @@ typedef struct _GLFWlibraryWayland
 
     _GLFWwindow*                pointerFocus;
     _GLFWwindow*                keyboardFocus;
+
+    // Touch points currently down, delivered to the touch callback
+    // (belluikit/glfw#1). wl_touch up/motion/cancel events carry only the
+    // point id, so each down event records the id, target window and last
+    // known position here.
+    struct {
+        GLFWbool                inUse;
+        int32_t                 id;
+        _GLFWwindow*            window;
+        double                  x, y;
+    } touchPoints[GLFW_WL_MAX_TOUCH_POINTS];
 
     struct {
         void*                                       handle;

@@ -1986,6 +1986,165 @@ static const struct wl_keyboard_listener keyboardListener =
     keyboardHandleRepeatInfo,
 };
 
+// Touch input (belluikit/glfw#1). wl_touch events other than down carry only
+// the touch point id, so down records the id, window and position in
+// _glfw.wl.touchPoints and up/motion/cancel resolve the id there. Events are
+// forwarded as they arrive; frame is not buffered (documented on the API).
+
+// Whether a touch down targets the content surface of `window`. Returns false
+// when window is NULL — the down carried a foreign surface (one not tagged as
+// a glfw window), which must not be dereferenced (cf. the glfw#17 drag-enter
+// crash). Decoration surfaces resolve to a window but not its content surface
+// and are rejected too. Pure pointer logic, split out so the NULL-window guard
+// can be unit-tested without a compositor via
+// _glfwTestTouchDownTargetsWindowWayland below.
+static GLFWbool touchDownTargetsWindow(_GLFWwindow* window,
+                                       struct wl_surface* surface)
+{
+    return window && surface == window->wl.surface;
+}
+
+// Test hook (belluikit/glfw#1): exposes touchDownTargetsWindow so its
+// NULL-window guard can be exercised from a Go unit test. Not declared in any
+// public header.
+GLFWAPI int _glfwTestTouchDownTargetsWindowWayland(void* window, void* surface)
+{
+    return touchDownTargetsWindow((_GLFWwindow*) window,
+                                  (struct wl_surface*) surface) ? 1 : 0;
+}
+
+static void touchHandleDown(void* userData,
+                            struct wl_touch* touch,
+                            uint32_t serial,
+                            uint32_t time,
+                            struct wl_surface* surface,
+                            int32_t id,
+                            wl_fixed_t x,
+                            wl_fixed_t y)
+{
+    // Happens in the case we just destroyed the surface.
+    if (!surface)
+        return;
+
+    _GLFWwindow* window = NULL;
+    if (wl_proxy_get_tag((struct wl_proxy*) surface) == &_glfw.wl.tag)
+        window = wl_surface_get_user_data(surface);
+
+    if (!touchDownTargetsWindow(window, surface))
+        return;
+
+    _glfw.wl.serial = serial;
+
+    for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+    {
+        if (_glfw.wl.touchPoints[i].inUse)
+            continue;
+
+        _glfw.wl.touchPoints[i].inUse = GLFW_TRUE;
+        _glfw.wl.touchPoints[i].id = id;
+        _glfw.wl.touchPoints[i].window = window;
+        _glfw.wl.touchPoints[i].x = wl_fixed_to_double(x);
+        _glfw.wl.touchPoints[i].y = wl_fixed_to_double(y);
+
+        _glfwInputTouch(window, id, GLFW_TOUCH_BEGIN,
+                        _glfw.wl.touchPoints[i].x,
+                        _glfw.wl.touchPoints[i].y);
+        return;
+    }
+}
+
+static void touchHandleUp(void* userData,
+                          struct wl_touch* touch,
+                          uint32_t serial,
+                          uint32_t time,
+                          int32_t id)
+{
+    _glfw.wl.serial = serial;
+
+    for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+    {
+        if (!_glfw.wl.touchPoints[i].inUse || _glfw.wl.touchPoints[i].id != id)
+            continue;
+
+        _glfw.wl.touchPoints[i].inUse = GLFW_FALSE;
+        _glfwInputTouch(_glfw.wl.touchPoints[i].window, id, GLFW_TOUCH_END,
+                        _glfw.wl.touchPoints[i].x,
+                        _glfw.wl.touchPoints[i].y);
+        return;
+    }
+}
+
+static void touchHandleMotion(void* userData,
+                              struct wl_touch* touch,
+                              uint32_t time,
+                              int32_t id,
+                              wl_fixed_t x,
+                              wl_fixed_t y)
+{
+    for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+    {
+        if (!_glfw.wl.touchPoints[i].inUse || _glfw.wl.touchPoints[i].id != id)
+            continue;
+
+        _glfw.wl.touchPoints[i].x = wl_fixed_to_double(x);
+        _glfw.wl.touchPoints[i].y = wl_fixed_to_double(y);
+        _glfwInputTouch(_glfw.wl.touchPoints[i].window, id, GLFW_TOUCH_MOVE,
+                        _glfw.wl.touchPoints[i].x,
+                        _glfw.wl.touchPoints[i].y);
+        return;
+    }
+}
+
+static void touchHandleFrame(void* userData,
+                             struct wl_touch* touch)
+{
+}
+
+static void touchHandleCancel(void* userData,
+                              struct wl_touch* touch)
+{
+    // Cancellation applies to all touch points active on this client
+    for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+    {
+        if (!_glfw.wl.touchPoints[i].inUse)
+            continue;
+
+        _glfw.wl.touchPoints[i].inUse = GLFW_FALSE;
+        _glfwInputTouch(_glfw.wl.touchPoints[i].window,
+                        _glfw.wl.touchPoints[i].id, GLFW_TOUCH_CANCEL,
+                        _glfw.wl.touchPoints[i].x,
+                        _glfw.wl.touchPoints[i].y);
+    }
+}
+
+static void touchHandleShape(void* userData,
+                             struct wl_touch* touch,
+                             int32_t id,
+                             wl_fixed_t major,
+                             wl_fixed_t minor)
+{
+    // Never delivered at the seat version bound in wl_init.c; stubbed in case
+    // that version is raised
+}
+
+static void touchHandleOrientation(void* userData,
+                                   struct wl_touch* touch,
+                                   int32_t id,
+                                   wl_fixed_t orientation)
+{
+}
+
+static const struct wl_touch_listener touchListener =
+{
+    touchHandleDown,
+    touchHandleUp,
+    touchHandleMotion,
+    touchHandleFrame,
+    touchHandleCancel,
+    touchHandleShape,
+    touchHandleOrientation,
+};
+
 static void seatHandleCapabilities(void* userData,
                                    struct wl_seat* seat,
                                    enum wl_seat_capability caps)
@@ -2010,6 +2169,20 @@ static void seatHandleCapabilities(void* userData,
     {
         wl_keyboard_destroy(_glfw.wl.keyboard);
         _glfw.wl.keyboard = NULL;
+    }
+
+    if ((caps & WL_SEAT_CAPABILITY_TOUCH) && !_glfw.wl.touch)
+    {
+        _glfw.wl.touch = wl_seat_get_touch(seat);
+        wl_touch_add_listener(_glfw.wl.touch, &touchListener, NULL);
+    }
+    else if (!(caps & WL_SEAT_CAPABILITY_TOUCH) && _glfw.wl.touch)
+    {
+        wl_touch_destroy(_glfw.wl.touch);
+        _glfw.wl.touch = NULL;
+
+        for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+            _glfw.wl.touchPoints[i].inUse = GLFW_FALSE;
     }
 }
 
@@ -2775,6 +2948,15 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
 
     if (window == _glfw.wl.keyboardFocus)
         _glfw.wl.keyboardFocus = NULL;
+
+    for (int i = 0;  i < GLFW_WL_MAX_TOUCH_POINTS;  i++)
+    {
+        if (_glfw.wl.touchPoints[i].inUse &&
+            _glfw.wl.touchPoints[i].window == window)
+        {
+            _glfw.wl.touchPoints[i].inUse = GLFW_FALSE;
+        }
+    }
 
     if (window->wl.activationToken)
         xdg_activation_token_v1_destroy(window->wl.activationToken);

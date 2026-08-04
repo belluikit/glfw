@@ -1193,6 +1193,62 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             break;
         }
 
+        case WM_POINTERDOWN:
+        case WM_POINTERUPDATE:
+        case WM_POINTERUP:
+        case WM_POINTERCAPTURECHANGED:
+        {
+            // Touch input (belluikit/glfw#1). While a touch callback is set,
+            // PT_TOUCH pointers are consumed here and NOT passed on to
+            // DefWindowProc, which suppresses the system's legacy mouse
+            // emulation for them — both the deferred tap-to-left-click replay
+            // and the press-and-hold promotion to a right-click. Without a
+            // callback every pointer message falls through to DefWindowProc
+            // and the legacy behavior is preserved unchanged. Window
+            // activation is unaffected either way: it is driven by the
+            // default handling of WM_POINTERACTIVATE, which is not consumed
+            // here.
+            const UINT32 pointerId = GET_POINTERID_WPARAM(wParam);
+            DWORD pointerType = 0;
+
+            if (!window->callbacks.touch)
+                break;
+            if (!GetPointerType || !GetPointerType(pointerId, &pointerType))
+                break;
+            if (pointerType != GLFW_WIN32_PT_TOUCH)
+                break;
+
+            if (uMsg == WM_POINTERCAPTURECHANGED)
+            {
+                // The system took the pointer over (e.g. as a gesture); no
+                // position accompanies the message
+                _glfwInputTouch(window, (int) pointerId, GLFW_TOUCH_CANCEL,
+                                0.0, 0.0);
+                return 0;
+            }
+
+            // Hover updates of touch devices that report proximity carry no
+            // contact; leave them to default processing
+            if (uMsg == WM_POINTERUPDATE && !IS_POINTER_INCONTACT_WPARAM(wParam))
+                break;
+
+            POINT pos;
+            pos.x = GET_X_LPARAM(lParam);
+            pos.y = GET_Y_LPARAM(lParam);
+            ScreenToClient(hWnd, &pos);
+
+            int phase;
+            if (uMsg == WM_POINTERDOWN)
+                phase = GLFW_TOUCH_BEGIN;
+            else if (uMsg == WM_POINTERUP)
+                phase = GLFW_TOUCH_END;
+            else
+                phase = GLFW_TOUCH_MOVE;
+
+            _glfwInputTouch(window, (int) pointerId, phase, pos.x, pos.y);
+            return 0;
+        }
+
         case WM_LBUTTONDOWN:
         case WM_RBUTTONDOWN:
         case WM_MBUTTONDOWN:

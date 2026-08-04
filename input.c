@@ -40,6 +40,10 @@ void glfwSetDragCallbackCB(GLFWwindow *window) {
   glfwSetDragCallback(window, (GLFWdragfun)goDragCB);
 }
 
+void glfwSetTouchCallbackCB(GLFWwindow *window) {
+  glfwSetTouchCallback(window, (GLFWtouchfun)goTouchCB);
+}
+
 void glfwSetPreeditCallbackCB(GLFWwindow *window) {
   glfwSetPreeditCallback(window, (GLFWpreeditfun)goPreeditCB);
 }

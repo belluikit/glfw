@@ -356,6 +356,20 @@ extern "C" {
 #define GLFW_DRAG_LEAVE             3
 /*! @} */
 
+/*! @defgroup touch_phases Touch phases
+ *  @brief Phases reported by a @ref GLFWtouchfun (belluikit/glfw#1).
+ *  @{ */
+/*! @brief A touch point has been placed on the window's content area. */
+#define GLFW_TOUCH_BEGIN            1
+/*! @brief A touch point has moved within the window's content area. */
+#define GLFW_TOUCH_MOVE             2
+/*! @brief A touch point has been lifted. */
+#define GLFW_TOUCH_END              3
+/*! @brief A touch sequence was cancelled by the system (e.g. taken over as a
+ *  global gesture); the touch point must be discarded without acting on it. */
+#define GLFW_TOUCH_CANCEL           4
+/*! @} */
+
 /*! @defgroup hat_state Joystick hat states
  *  @brief Joystick hat states.
  *
@@ -2075,6 +2089,35 @@ typedef void (* GLFWdropfun)(GLFWwindow* window, int path_count, const char* pat
  *  @ingroup input
  */
 typedef void (* GLFWdragfun)(GLFWwindow* window, int phase, double xpos, double ypos);
+
+/*! @brief The function pointer type for touch callbacks.
+ *
+ *  This is the function pointer type for touch callbacks, a belluikit/glfw
+ *  extension (belluikit/glfw#1). It reports touchscreen contacts on the
+ *  window's content area, independently of the emulated mouse. A touch
+ *  callback has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int touchID, int phase, double xpos, double ypos)
+ *  @endcode
+ *
+ *  @param[in] window The window that received the event.
+ *  @param[in] touchID The platform identifier of the touch point. It is unique
+ *  among the touch points currently down and may be reused after the point
+ *  ends.
+ *  @param[in] phase One of `GLFW_TOUCH_BEGIN`, `GLFW_TOUCH_MOVE`,
+ *  `GLFW_TOUCH_END` or `GLFW_TOUCH_CANCEL`.
+ *  @param[in] xpos The touch x-coordinate, relative to the left edge of the
+ *  content area. For `GLFW_TOUCH_CANCEL` this is the last known position, or 0
+ *  where the platform does not report one.
+ *  @param[in] ypos The touch y-coordinate, relative to the top edge of the
+ *  content area. For `GLFW_TOUCH_CANCEL` this is the last known position, or 0
+ *  where the platform does not report one.
+ *
+ *  @sa @ref glfwSetTouchCallback
+ *
+ *  @ingroup input
+ */
+typedef void (* GLFWtouchfun)(GLFWwindow* window, int touchID, int phase, double xpos, double ypos);
 
 /*! @brief The function pointer type for monitor configuration callbacks.
  *
@@ -5834,6 +5877,53 @@ GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* window, GLFWdropfun callback
  *  @ingroup input
  */
 GLFWAPI GLFWdragfun glfwSetDragCallback(GLFWwindow* window, GLFWdragfun callback);
+
+/*! @brief Sets the touch callback.
+ *
+ *  This function sets the touch callback of the specified window, a
+ *  belluikit/glfw extension (belluikit/glfw#1). It is called when a
+ *  touchscreen contact begins on the window's content area, moves, ends or is
+ *  cancelled by the system.
+ *
+ *  Touch is delivered on the platforms whose input protocol exposes it to the
+ *  fork (Windows `WM_POINTER` and Wayland `wl_touch`); elsewhere the callback
+ *  simply never fires. On X11 touch continues to arrive as an emulated mouse.
+ *
+ *  Setting a touch callback changes platform behavior deliberately
+ *  (belluikit/glfw#1):
+ *
+ *  - On Windows, touches are consumed as touch events while a callback is
+ *    set, which suppresses the system's legacy mouse emulation for them —
+ *    including tap-to-left-click and the press-and-hold promotion to
+ *    right-click. Remove the callback (set `NULL`) to restore the legacy
+ *    behavior.
+ *  - On Wayland, touches previously did nothing at all; with a callback set
+ *    they are reported through it. The emulated mouse is unaffected because
+ *    compositors do not emulate one for touch.
+ *
+ *  Events are delivered as the platform reports them; a multi-touch frame
+ *  arrives as one callback call per touch point.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] callback The new touch callback, or `NULL` to remove the
+ *  currently set callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or
+ *  the library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int touchID, int phase, double xpos, double ypos)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWtouchfun).
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* window, GLFWtouchfun callback);
 
 /*! @brief Returns whether the specified joystick is present.
  *
