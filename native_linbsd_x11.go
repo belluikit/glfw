@@ -43,7 +43,7 @@ func (w *Window) GetX11Window() C.Window {
 // above parent and minimizes them together. Pass a nil parent to clear it.
 // Must be called from the main thread.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW), the X11 twin of
+// This is a belluikit/glfw extension (not in upstream GLFW), the X11 twin of
 // (*Window).SetWaylandParent, for window-hosted dialogs (fyne#598).
 func (w *Window) SetX11Parent(parent *Window) {
 	var p *C.GLFWwindow
@@ -59,7 +59,7 @@ func (w *Window) SetX11Parent(parent *Window) {
 // is shown. Call SetX11Parent first to establish that owner; pass false to
 // clear the modal state. Must be called from the main thread.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW), the modal twin of
+// This is a belluikit/glfw extension (not in upstream GLFW), the modal twin of
 // (*Window).SetX11Parent, for window-hosted dialogs (fyne#498).
 func (w *Window) SetX11Modal(modal bool) {
 	m := C.int(False)

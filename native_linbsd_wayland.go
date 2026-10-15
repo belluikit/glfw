@@ -47,7 +47,7 @@ func (w *Window) GetWaylandWindow() *C.struct_wl_surface {
 // nil parent to unset it. Both windows must be mapped toplevels; the call is
 // ignored if w has no xdg_toplevel yet. Must be called from the main thread.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW): GLFW does not
+// This is a belluikit/glfw extension (not in upstream GLFW): GLFW does not
 // otherwise expose the internal xdg_toplevel, so window-hosted dialogs
 // (fyne#598) cannot express window parenting on Wayland without it.
 func (w *Window) SetWaylandParent(parent *Window) {
@@ -64,7 +64,7 @@ func (w *Window) SetWaylandParent(parent *Window) {
 // SetWaylandParent) while w is shown. Pass false to clear it. Compositors
 // without the protocol leave this a no-op. Must be called from the main thread.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW), the modal twin of
+// This is a belluikit/glfw extension (not in upstream GLFW), the modal twin of
 // (*Window).SetWaylandParent, for window-hosted dialogs (fyne#498).
 func (w *Window) SetWaylandModal(modal bool) {
 	m := C.int(False)
@@ -83,7 +83,7 @@ func (w *Window) SetWaylandModal(modal bool) {
 // destroyed; repeated calls return the same handle. Must be called from the main
 // thread while w is shown.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW), added for parenting
+// This is a belluikit/glfw extension (not in upstream GLFW), added for parenting
 // native portal dialogs on Wayland (fyne#626).
 func (w *Window) ExportWaylandHandle() (string, error) {
 	h := C.glfwGetWaylandWindowExportHandle(w.data)
@@ -119,7 +119,7 @@ const (
 // unavailable, no input serial exists (not called from a button gesture) or the
 // arguments are invalid. Must be called from the main thread.
 //
-// This is a trendvidia/glfw extension (not in upstream GLFW): the seat, data
+// This is a belluikit/glfw extension (not in upstream GLFW): the seat, data
 // device and pointer button serial that start_drag requires are otherwise
 // private to GLFW, so a toolkit cannot initiate drag-out on Wayland without it
 // (fyne#838).

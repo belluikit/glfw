@@ -2,13 +2,23 @@
 [![Static Analysis](https://github.com/belluikit/glfw/actions/workflows/analysis.yml/badge.svg)](https://github.com/belluikit/glfw/actions/workflows/analysis.yml)
 [![GoDoc](https://pkg.go.dev/badge/github.com/belluikit/glfw.svg)](https://pkg.go.dev/github.com/belluikit/glfw)
 
-# GLFW 3.4 for Go (trendvidia fork)
+# GLFW 3.4 for Go (belluikit fork)
 
-This is a fork of [go-gl/glfw](https://github.com/go-gl/glfw) that adds IME /
-preedit support (ported from the unmerged upstream PR
-[glfw/glfw#2130](https://github.com/glfw/glfw/pull/2130)). The module is
-imported as `github.com/belluikit/glfw` (the upstream `v3.4/glfw`
-subdirectory layout is flattened to the repository root).
+**Fork of [go-gl/glfw](https://github.com/go-gl/glfw)**, maintained for
+[Bellui](https://bellui.com) ([belluikit/bellui](https://github.com/belluikit/bellui)).
+The module path is `github.com/belluikit/glfw`; the upstream `v3.4/glfw`
+subdirectory layout is flattened to the repository root, so import
+`github.com/belluikit/glfw` instead of `github.com/go-gl/glfw/v3.4/glfw`.
+
+On top of go-gl/glfw this fork adds IME / preedit support (ported from the
+unmerged upstream PR [glfw/glfw#2130](https://github.com/glfw/glfw/pull/2130)),
+generic MIME clipboard flavors, drag-motion callbacks, touch input, and native
+window parenting and modality on X11 and Wayland.
+
+The bundled GLFW C sources under `glfw/` are therefore **modified** from
+upstream GLFW. [MODIFICATIONS.md](MODIFICATIONS.md) lists every altered and
+added file. GLFW is under the zlib license ([glfw/LICENSE.md](glfw/LICENSE.md));
+the Go bindings are under the BSD license in [LICENSE](LICENSE).
 
 ## Installation
 

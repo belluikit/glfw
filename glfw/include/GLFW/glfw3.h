@@ -25,6 +25,7 @@
  *    distribution.
  *
  *************************************************************************/
+/* Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md. */
 
 #ifndef _glfw3_h_
 #define _glfw3_h_
@@ -346,7 +347,7 @@ extern "C" {
 /*! @} */
 
 /*! @defgroup drag_phases Drag-motion phases
- *  @brief Phases reported by a @ref GLFWdragfun (trendvidia/glfw, fyne #708).
+ *  @brief Phases reported by a @ref GLFWdragfun (belluikit/glfw, fyne #708).
  *  @{ */
 /*! @brief A drag has entered the window's content area. */
 #define GLFW_DRAG_ENTER             1
@@ -2068,7 +2069,7 @@ typedef void (* GLFWdropfun)(GLFWwindow* window, int path_count, const char* pat
 /*! @brief The function pointer type for drag-motion callbacks.
  *
  *  This is the function pointer type for drag-motion callbacks, a
- *  trendvidia/glfw extension (fyne #708). Unlike @ref GLFWdropfun, which fires
+ *  belluikit/glfw extension (fyne #708). Unlike @ref GLFWdropfun, which fires
  *  only on the final drop, this reports a drag *in progress* over the window so
  *  the application can show hover feedback. A drag-motion callback has the
  *  following signature:
@@ -2259,7 +2260,7 @@ typedef struct GLFWimage
  *  @sa @ref glfwSetClipboardData
  *  @sa @ref glfwGetClipboardData
  *
- *  @since Added in the trendvidia fork (fyne#513).
+ *  @since Added in the belluikit fork (fyne#513).
  *
  *  @ingroup input
  */
@@ -5848,7 +5849,7 @@ GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* window, GLFWdropfun callback
 /*! @brief Sets the drag-motion callback.
  *
  *  This function sets the drag-motion callback of the specified window, a
- *  trendvidia/glfw extension (fyne #708). It is called while a drag is in
+ *  belluikit/glfw extension (fyne #708). It is called while a drag is in
  *  progress over the window — on enter, on each move, and on leave — so the
  *  application can render hover feedback before the drop. The final drop is
  *  still reported through @ref glfwSetDropCallback.
@@ -6473,7 +6474,7 @@ GLFWAPI const char* glfwGetClipboardString(GLFWwindow* window);
  *  @sa @ref glfwGetClipboardData
  *  @sa @ref glfwGetClipboardTargets
  *
- *  @since Added in the trendvidia fork (fyne#513).
+ *  @since Added in the belluikit fork (fyne#513).
  *
  *  @ingroup input
  */
@@ -6511,7 +6512,7 @@ GLFWAPI void glfwSetClipboardData(const GLFWclipboardflavor* flavors, int count)
  *  @sa @ref glfwSetClipboardData
  *  @sa @ref glfwGetClipboardTargets
  *
- *  @since Added in the trendvidia fork (fyne#513).
+ *  @since Added in the belluikit fork (fyne#513).
  *
  *  @ingroup input
  */
@@ -6542,7 +6543,7 @@ GLFWAPI const unsigned char* glfwGetClipboardData(const char* mimeType, size_t* 
  *  @sa @ref clipboard
  *  @sa @ref glfwGetClipboardData
  *
- *  @since Added in the trendvidia fork (fyne#513).
+ *  @since Added in the belluikit fork (fyne#513).
  *
  *  @ingroup input
  */

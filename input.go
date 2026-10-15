@@ -795,7 +795,7 @@ func (w *Window) SetDropCallback(cbfun DropCallback) (previous DropCallback) {
 }
 
 // DragPhase is the stage of a drag-motion event reported to a DragCallback
-// (a trendvidia/glfw extension, fyne #708).
+// (a belluikit/glfw extension, fyne #708).
 type DragPhase int
 
 const (
@@ -815,7 +815,7 @@ type DragCallback func(w *Window, phase DragPhase, x, y float64)
 
 // SetDragCallback sets the drag-motion callback which is called while a drag is
 // in progress over the window (on enter, on each move, and on leave), a
-// trendvidia/glfw extension (fyne #708). It is delivered on platforms whose
+// belluikit/glfw extension (fyne #708). It is delivered on platforms whose
 // native drag protocol exposes it (X11 XDND, macOS NSDraggingDestination); on
 // others it simply never fires and only the drop is reported (SetDropCallback).
 func (w *Window) SetDragCallback(cbfun DragCallback) (previous DragCallback) {

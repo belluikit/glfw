@@ -1,1 +1,2 @@
 7b6aead9fb88b3623e3b3725ebb42670cbe4c579
+# Modified tree: these GLFW sources are altered; see MODIFICATIONS.md.

@@ -25,6 +25,7 @@
  *    distribution.
  *
  *************************************************************************/
+/* Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md. */
 
 #ifndef _glfw3_native_h_
 #define _glfw3_native_h_
@@ -399,7 +400,7 @@ GLFWAPI Window glfwGetX11Window(GLFWwindow* window);
  *  manager keeps `window` above `parent` and minimizes them together. Pass
  *  `NULL` as `parent` to clear the hint.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), the X11 twin of
+ *  This is a belluikit/glfw extension (not in upstream GLFW), the X11 twin of
  *  @ref glfwSetWaylandWindowParent, added for window-hosted dialogs (fyne#598).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
@@ -418,7 +419,7 @@ GLFWAPI void glfwSetX11WindowParent(GLFWwindow* window, GLFWwindow* parent);
  *  owner while this window is up. Call @ref glfwSetX11WindowParent first to set
  *  that owner; a `GLFW_FALSE` value clears the modal state.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), the modal twin
+ *  This is a belluikit/glfw extension (not in upstream GLFW), the modal twin
  *  of @ref glfwSetX11WindowParent, added for window-hosted dialogs (fyne#498).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
@@ -576,7 +577,7 @@ GLFWAPI struct wl_surface* glfwGetWaylandWindow(GLFWwindow* window);
  *  `NULL` as `parent` to unset the relationship. Both windows must be mapped
  *  toplevels; the call is ignored if `window` has no xdg_toplevel yet.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), added for
+ *  This is a belluikit/glfw extension (not in upstream GLFW), added for
  *  window-hosted dialogs (fyne#598): GLFW does not otherwise expose the
  *  internal `xdg_toplevel`, and the relationship cannot be expressed through
  *  the public API.
@@ -598,7 +599,7 @@ GLFWAPI void glfwSetWaylandWindowParent(GLFWwindow* window, GLFWwindow* parent);
  *  @ref glfwSetWaylandWindowParent). Compositors without the protocol leave the
  *  call a no-op.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), the modal twin
+ *  This is a belluikit/glfw extension (not in upstream GLFW), the modal twin
  *  of @ref glfwSetWaylandWindowParent, added for window-hosted dialogs
  *  (fyne#498).
  *
@@ -623,7 +624,7 @@ GLFWAPI void glfwSetWaylandWindowModal(GLFWwindow* window, int modal);
  *  returned string is owned by GLFW and remains valid until the window is
  *  destroyed; repeated calls return the same cached handle.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), added for
+ *  This is a belluikit/glfw extension (not in upstream GLFW), added for
  *  parenting native portal dialogs on Wayland (fyne#626).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
@@ -661,7 +662,7 @@ GLFWAPI const char* glfwGetWaylandWindowExportHandle(GLFWwindow* window);
  *  is not Wayland, the data device is unavailable, no input serial is available
  *  (not called from a button gesture), or the arguments are invalid.
  *
- *  This is a trendvidia/glfw extension (not in upstream GLFW), added to let a
+ *  This is a belluikit/glfw extension (not in upstream GLFW), added to let a
  *  toolkit initiate native drag-out on Wayland — the state `start_drag` needs
  *  (data device, seat and the pointer button serial) is otherwise private to
  *  GLFW (fyne#838).

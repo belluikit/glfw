@@ -24,6 +24,7 @@
 //    distribution.
 //
 //========================================================================
+// Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md.
 
 #define GLFW_NULL_WINDOW_STATE          _GLFWwindowNull null;
 #define GLFW_NULL_LIBRARY_WINDOW_STATE  _GLFWlibraryNull null;
