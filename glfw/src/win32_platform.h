@@ -24,6 +24,7 @@
 //    distribution.
 //
 //========================================================================
+// Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md.
 
 // We don't need all the fancy stuff
 #ifndef NOMINMAX

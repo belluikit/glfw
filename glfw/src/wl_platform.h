@@ -23,6 +23,7 @@
 //    distribution.
 //
 //========================================================================
+// Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md.
 
 #include <wayland-client-core.h>
 #include <xkbcommon/xkbcommon.h>

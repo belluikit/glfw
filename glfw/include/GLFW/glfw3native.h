@@ -25,6 +25,7 @@
  *    distribution.
  *
  *************************************************************************/
+/* Modified by the Bellui authors (github.com/belluikit/glfw); see MODIFICATIONS.md. */
 
 #ifndef _glfw3_native_h_
 #define _glfw3_native_h_

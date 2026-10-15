@@ -23,6 +23,7 @@
 //    distribution.
 //
 //========================================================================
+// Modified by the go-gl/glfw authors (carried unchanged in github.com/belluikit/glfw); see MODIFICATIONS.md.
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
