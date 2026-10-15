@@ -30,7 +30,8 @@ usage() {
 GLFW_REVISION="${1:-}"
 if [ -z "$GLFW_REVISION" ]; then
     if [ -r "$REVISION_FILE" ]; then
-        GLFW_REVISION="$(cat "$REVISION_FILE")"
+        # Only the first line is the revision; later lines are notes.
+        GLFW_REVISION="$(head -n 1 "$REVISION_FILE")"
     else
         usage 1
     fi
@@ -148,5 +149,8 @@ mv "$AGGREGATE_DIR" "$GLFW_DIR"
 
 generate_dummy_go_files "$GLFW_DIR" "github.com/belluikit/glfw/glfw/deps"
 
-# Record the revision the tree was regenerated from.
-printf '%s\n' "$GLFW_REVISION" > "$REVISION_FILE"
+# Record the revision the tree was regenerated from. The note line stays: the
+# fork patches must be reapplied after this script (see the warning above), and
+# MODIFICATIONS.md must then be brought up to date.
+printf '%s\n%s\n' "$GLFW_REVISION" \
+    "# Modified tree: these GLFW sources are altered; see MODIFICATIONS.md." > "$REVISION_FILE"
