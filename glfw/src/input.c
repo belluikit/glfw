@@ -454,7 +454,7 @@ void _glfwInputDrop(_GLFWwindow* window, int count, const char** paths)
         window->callbacks.drop((GLFWwindow*) window, count, paths);
 }
 
-// Notifies shared code of drag-motion over the window (trendvidia/glfw, fyne #708)
+// Notifies shared code of drag-motion over the window (belluikit/glfw, fyne #708)
 //
 void _glfwInputDrag(_GLFWwindow* window, int phase, double xpos, double ypos)
 {
