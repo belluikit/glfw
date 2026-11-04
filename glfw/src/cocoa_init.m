@@ -168,10 +168,10 @@ static void createMenuBar(void)
                     keyEquivalent:@"f"]
      setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
 
-    // Prior to Snow Leopard, we need to use this oddly-named semi-private API
-    // to get the application menu working properly.
-    SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
-    [NSApp performSelector:setAppleMenuSelector withObject:appMenu];
+    // Upstream also called the undeclared -[NSApplication setAppleMenu:] here,
+    // which only Mac OS X before 10.6 needed. The first item of the main menu is
+    // the application menu, and a non-public selector in every binary is a Mac
+    // App Store risk, so this fork leaves it out (belluikit/glfw#6).
 }
 
 // Create key code translation tables
