@@ -68,6 +68,7 @@ package dummy
 EOF
         echo
         echo "import ("
+        echo "	// Prevent go tooling from stripping out the c source files."
         find "$glfw_root/deps" -mindepth 1 -maxdepth 1 -type d | sort |
             while IFS= read -r dep_dir; do
                 dep_name="$(basename "$dep_dir")"
