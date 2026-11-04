@@ -88,6 +88,8 @@ generate_wayland_protocol_headers() {
         exit 1
     fi
 
+    # Protocols upstream GLFW ships in deps/wayland. wayland_protocols_test.go
+    # reads this list, so keep one name per line.
     local protocol_files=(
         wayland.xml
         viewporter.xml
@@ -98,11 +100,17 @@ generate_wayland_protocol_headers() {
         fractional-scale-v1.xml
         xdg-activation-v1.xml
         xdg-decoration-unstable-v1.xml
-        # Fork-specific protocols (not shipped by upstream GLFW); overlaid onto
-        # the upstream tree from scripts/fork-wayland-protocols before scanning.
-        text-input-unstable-v1.xml
-        text-input-unstable-v3.xml
     )
+
+    # Fork-specific protocols (not shipped by upstream GLFW): every XML in
+    # scripts/fork-wayland-protocols, which was overlaid onto the upstream tree
+    # before scanning. Taken from the directory, not listed by hand, so adding
+    # a protocol there is enough to keep it across a regeneration.
+    local fork_protocol
+    for fork_protocol in "$FORK_PROTOCOLS_DIR"/*.xml; do
+        [ -e "$fork_protocol" ] || continue
+        protocol_files+=("$(basename "$fork_protocol")")
+    done
 
     for protocol in "${protocol_files[@]}"; do
         local protocol_path="$upstream_root/deps/wayland/$protocol"
@@ -124,7 +132,8 @@ curl -fsSL "https://github.com/glfw/glfw/archive/${GLFW_REVISION}.tar.gz" |
     tar xz --strip-components=1 --directory="$UPSTREAM_SRC"
 
 # Overlay fork-specific Wayland protocols that upstream GLFW does not ship (the
-# IME text-input protocols from glfw/glfw#2130). They are vendored into the
+# IME text-input protocols from glfw/glfw#2130, xdg-dialog for window modality,
+# xdg-foreign for portal parenting). They are vendored into the
 # regenerated deps/wayland tree and their client-protocol headers are generated
 # alongside upstream's below.
 FORK_PROTOCOLS_DIR="$REPO_ROOT/scripts/fork-wayland-protocols"
