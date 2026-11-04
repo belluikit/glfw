@@ -35,7 +35,7 @@ Alterations made by this fork (github.com/belluikit/glfw):
 - `glfw/include/GLFW/glfw3.h`: public API for IME/preedit, generic MIME clipboard flavors, drag-motion callback (`glfwSetDragCallback`) and touch input (`glfwSetTouchCallback`).
 - `glfw/include/GLFW/glfw3native.h`: native accessors for window parenting (X11/Wayland), window modality (X11, Wayland xdg-dialog-v1), xdg-foreign export handles and Wayland drag-out (`glfwStartWaylandDrag`).
 - `glfw/src/CMakeLists.txt`: generate the xdg-dialog-v1 and xdg-foreign-unstable-v2 Wayland protocol headers.
-- `glfw/src/cocoa_init.m`: IME/preedit support; MIME clipboard flavors.
+- `glfw/src/cocoa_init.m`: IME/preedit support; MIME clipboard flavors; no call to the undeclared `setAppleMenu:` (a Mac App Store private-API risk, #6).
 - `glfw/src/cocoa_platform.h`: IME/preedit support; MIME clipboard flavors.
 - `glfw/src/cocoa_window.m`: IME/preedit support and the correct input-context discard; MIME clipboard flavors; drag-motion callback.
 - `glfw/src/init.c`: IME/preedit support.
