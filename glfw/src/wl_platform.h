@@ -562,6 +562,19 @@ typedef struct _GLFWlibraryWayland
     _GLFWwindow*                pointerFocus;
     _GLFWwindow*                keyboardFocus;
 
+    // The version the seat was bound at, and the scroll of the pointer frame
+    // being gathered (belluikit/glfw#13). From seat version 5 a pointer
+    // groups the axis values, their source and the end of a finger scroll
+    // into frames; GLFW reports a frame as one extended scroll.
+    uint32_t                    seatVersion;
+    struct {
+        double                  x, y;
+        GLFWbool                moved;
+        GLFWbool                stopped;
+        uint32_t                source;    // of this frame, or of the last
+        GLFWbool                gesture;   // a finger scroll has begun
+    } scroll;
+
     // Touch points currently down, delivered to the touch callback
     // (belluikit/glfw#1). wl_touch up/motion/cancel events carry only the
     // point id, so each down event records the id, target window and last

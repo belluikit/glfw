@@ -625,6 +625,8 @@ struct _GLFWwindow
         GLFWdropfun               drop;
         GLFWdragfun               drag;
         GLFWtouchfun              touch;
+        GLFWscrollexfun           scrollEx;
+        GLFWpinchfun              pinch;
     } callbacks;
 
     // This is defined in platform.h
@@ -992,6 +994,8 @@ void _glfwInputCursorEnter(_GLFWwindow* window, GLFWbool entered);
 void _glfwInputDrop(_GLFWwindow* window, int count, const char** names);
 void _glfwInputDrag(_GLFWwindow* window, int phase, double xpos, double ypos);
 void _glfwInputTouch(_GLFWwindow* window, int touchID, int phase, double xpos, double ypos);
+void _glfwInputScrollEx(_GLFWwindow* window, double xoffset, double yoffset, int source, int phase, int mods);
+void _glfwInputPinch(_GLFWwindow* window, double scale, int phase);
 void _glfwInputJoystick(_GLFWjoystick* js, int event);
 void _glfwInputJoystickAxis(_GLFWjoystick* js, int axis, float value);
 void _glfwInputJoystickButton(_GLFWjoystick* js, int button, char value);

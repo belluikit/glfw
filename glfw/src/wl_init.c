@@ -154,9 +154,12 @@ static void registryHandleGlobal(void* userData,
     {
         if (!_glfw.wl.seat)
         {
+            // Version 5 adds the pointer's frames, axis sources and axis
+            // stops, which tell a finger scroll and its end (belluikit/glfw#13)
+            _glfw.wl.seatVersion = _glfw_min(5, version);
             _glfw.wl.seat =
                 wl_registry_bind(registry, name, &wl_seat_interface,
-                                 _glfw_min(4, version));
+                                 _glfw.wl.seatVersion);
             _glfwAddSeatListenerWayland(_glfw.wl.seat);
         }
     }

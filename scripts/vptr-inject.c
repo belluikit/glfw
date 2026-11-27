@@ -9,6 +9,10 @@
 //
 // Usage: WAYLAND_DISPLAY must be set. Optional argv: <width> <height> (output
 // extent, default 1600x1200). It presses left over the centre, drags, releases.
+//
+// With "scroll" as the first argument (then the optional extent) it scrolls
+// over the centre instead (belluikit/glfw#13): one wheel step, then a finger
+// scroll of three frames ending in an axis stop.
 #include <linux/input-event-codes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -46,8 +50,39 @@ static void nap(long ms)
     nanosleep(&ts, NULL);
 }
 
+static void inject_scroll(struct wl_display* dpy, struct zwlr_virtual_pointer_v1* vp)
+{
+    // One wheel step down.
+    zwlr_virtual_pointer_v1_axis_source(vp, WL_POINTER_AXIS_SOURCE_WHEEL);
+    zwlr_virtual_pointer_v1_axis(vp, now_ms(), WL_POINTER_AXIS_VERTICAL_SCROLL,
+                                 wl_fixed_from_int(10));
+    zwlr_virtual_pointer_v1_frame(vp);
+    wl_display_flush(dpy);
+    nap(200);
+
+    // Two fingers move three times, then lift.
+    for (int i = 0; i < 3; i++) {
+        zwlr_virtual_pointer_v1_axis_source(vp, WL_POINTER_AXIS_SOURCE_FINGER);
+        zwlr_virtual_pointer_v1_axis(vp, now_ms(), WL_POINTER_AXIS_VERTICAL_SCROLL,
+                                     wl_fixed_from_int(5));
+        zwlr_virtual_pointer_v1_frame(vp);
+        wl_display_flush(dpy);
+        nap(100);
+    }
+    zwlr_virtual_pointer_v1_axis_source(vp, WL_POINTER_AXIS_SOURCE_FINGER);
+    zwlr_virtual_pointer_v1_axis_stop(vp, now_ms(), WL_POINTER_AXIS_VERTICAL_SCROLL);
+    zwlr_virtual_pointer_v1_frame(vp);
+    wl_display_flush(dpy);
+    wl_display_roundtrip(dpy);
+}
+
 int main(int argc, char** argv)
 {
+    int scroll = argc > 1 && strcmp(argv[1], "scroll") == 0;
+    if (scroll) {
+        argc--;
+        argv++;
+    }
     uint32_t w = argc > 1 ? (uint32_t)atoi(argv[1]) : 1600;
     uint32_t h = argc > 2 ? (uint32_t)atoi(argv[2]) : 1200;
 
@@ -74,6 +109,13 @@ int main(int argc, char** argv)
     zwlr_virtual_pointer_v1_frame(vp);
     wl_display_flush(dpy);
     nap(400);
+
+    if (scroll) {
+        inject_scroll(dpy, vp);
+        zwlr_virtual_pointer_v1_destroy(vp);
+        wl_display_disconnect(dpy);
+        return 0;
+    }
 
     // Press left: creates the implicit grab + input serial; the toolkit's button
     // handler runs and calls StartWaylandDrag during this dispatch.

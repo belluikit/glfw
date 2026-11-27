@@ -25,3 +25,20 @@ jobs:
 
     - name: Tests
       run: go test -race ./...
+
+  # Runs the Windows-only tests (gesture_windows_test.go, belluikit/glfw#13)
+  # and builds the Win32 sources, which the Linux jobs never compile. It uses
+  # a current Go: go.mod's minimum (1.19) cannot link its runtime's cgo
+  # against the runner's MinGW gcc (undefined __imp___iob_func).
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 'stable'
+
+    - name: Tests
+      run: go test -count=1 -v ./...

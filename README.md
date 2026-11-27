@@ -12,8 +12,9 @@ subdirectory layout is flattened to the repository root, so import
 
 On top of go-gl/glfw this fork adds IME / preedit support (ported from the
 unmerged upstream PR [glfw/glfw#2130](https://github.com/glfw/glfw/pull/2130)),
-generic MIME clipboard flavors, drag-motion callbacks, touch input, and native
-window parenting and modality on X11 and Wayland.
+generic MIME clipboard flavors, drag-motion callbacks, touch input, trackpad
+scroll gestures and pinch (`SetScrollExCallback`, `SetPinchCallback`), and
+native window parenting and modality on X11 and Wayland.
 
 The bundled GLFW C sources under `glfw/` are therefore **modified** from
 upstream GLFW. [MODIFICATIONS.md](MODIFICATIONS.md) lists every altered and

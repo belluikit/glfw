@@ -234,6 +234,8 @@ type Window struct {
 	fDropHolder        func(w *Window, names []string)
 	fDragHolder        func(w *Window, phase DragPhase, x, y float64)
 	fTouchHolder       func(w *Window, touchID int, phase TouchPhase, x, y float64)
+	fScrollExHolder    func(w *Window, xoff, yoff float64, source ScrollSource, phase GesturePhase, mods ModifierKey)
+	fPinchHolder       func(w *Window, scale float64, phase GesturePhase)
 	fPreeditHolder     func(w *Window, preeditString []rune, blockSizes []int, focusedBlock int, caret int)
 	fIMEStatusHolder   func(w *Window)
 }

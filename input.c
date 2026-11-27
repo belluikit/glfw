@@ -44,6 +44,14 @@ void glfwSetTouchCallbackCB(GLFWwindow *window) {
   glfwSetTouchCallback(window, (GLFWtouchfun)goTouchCB);
 }
 
+void glfwSetScrollExCallbackCB(GLFWwindow *window) {
+  glfwSetScrollExCallback(window, (GLFWscrollexfun)goScrollExCB);
+}
+
+void glfwSetPinchCallbackCB(GLFWwindow *window) {
+  glfwSetPinchCallback(window, (GLFWpinchfun)goPinchCB);
+}
+
 void glfwSetPreeditCallbackCB(GLFWwindow *window) {
   glfwSetPreeditCallback(window, (GLFWpreeditfun)goPreeditCB);
 }

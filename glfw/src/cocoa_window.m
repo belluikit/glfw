@@ -605,6 +605,27 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     _glfwInputKey(window, key, [event keyCode], GLFW_RELEASE, mods);
 }
 
+// Maps an NSEvent phase to a GLFW gesture phase, or GLFW_GESTURE_PHASE_NONE
+// for the ones GLFW does not report (belluikit/glfw#13)
+//
+static int translateGesturePhase(NSEventPhase phase)
+{
+    switch (phase)
+    {
+        case NSEventPhaseBegan:
+            return GLFW_GESTURE_PHASE_BEGAN;
+        case NSEventPhaseChanged:
+            return GLFW_GESTURE_PHASE_CHANGED;
+        case NSEventPhaseEnded:
+            return GLFW_GESTURE_PHASE_ENDED;
+        case NSEventPhaseCancelled:
+            return GLFW_GESTURE_PHASE_CANCELLED;
+        default:
+            // MayBegin (fingers resting, not yet moving), Stationary and None
+            return GLFW_GESTURE_PHASE_NONE;
+    }
+}
+
 - (void)scrollWheel:(NSEvent *)event
 {
     double deltaX = [event scrollingDeltaX];
@@ -616,8 +637,64 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         deltaY *= 0.1;
     }
 
-    if (fabs(deltaX) > 0.0 || fabs(deltaY) > 0.0)
-        _glfwInputScroll(window, deltaX, deltaY);
+    // A touch surface reports a gesture: its own phase while the fingers are
+    // down, then a momentum phase for the coast the system adds after they
+    // lift. A wheel reports neither (belluikit/glfw#13)
+    const NSEventPhase phase = [event phase];
+    const NSEventPhase momentum = [event momentumPhase];
+    const int mods = translateFlags([event modifierFlags]);
+    const int moved = fabs(deltaX) > 0.0 || fabs(deltaY) > 0.0;
+
+    if (momentum != NSEventPhaseNone)
+    {
+        // The coast's own begin and end carry no movement and are not reported
+        if (moved)
+        {
+            _glfwInputScrollEx(window, deltaX, deltaY,
+                               GLFW_SCROLL_SOURCE_TOUCHPAD,
+                               GLFW_GESTURE_PHASE_MOMENTUM, mods);
+        }
+        return;
+    }
+
+    if (phase == NSEventPhaseNone)
+    {
+        if (moved)
+        {
+            _glfwInputScrollEx(window, deltaX, deltaY,
+                               GLFW_SCROLL_SOURCE_WHEEL,
+                               GLFW_GESTURE_PHASE_NONE, mods);
+        }
+        return;
+    }
+
+    const int glfwPhase = translateGesturePhase(phase);
+    if (glfwPhase == GLFW_GESTURE_PHASE_NONE)
+        return;
+
+    if (glfwPhase == GLFW_GESTURE_PHASE_ENDED ||
+        glfwPhase == GLFW_GESTURE_PHASE_CANCELLED)
+    {
+        deltaX = 0.0;
+        deltaY = 0.0;
+    }
+
+    _glfwInputScrollEx(window, deltaX, deltaY,
+                       GLFW_SCROLL_SOURCE_TOUCHPAD, glfwPhase, mods);
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event
+{
+    // belluikit/glfw#13: magnification is the change since the previous event
+    const int phase = translateGesturePhase([event phase]);
+    if (phase == GLFW_GESTURE_PHASE_NONE)
+        return;
+
+    double scale = 1.0 + [event magnification];
+    if (phase == GLFW_GESTURE_PHASE_ENDED || phase == GLFW_GESTURE_PHASE_CANCELLED)
+        scale = 1.0;
+
+    _glfwInputPinch(window, scale, phase);
 }
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender

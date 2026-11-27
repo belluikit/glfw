@@ -381,8 +381,52 @@ void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset)
     assert(yoffset > -FLT_MAX);
     assert(yoffset < FLT_MAX);
 
+    // A platform that reports nothing more than the offsets still reaches an
+    // extended callback, which replaces the plain one (belluikit/glfw#13)
+    if (window->callbacks.scrollEx)
+    {
+        window->callbacks.scrollEx((GLFWwindow*) window, xoffset, yoffset,
+                                   GLFW_SCROLL_SOURCE_UNKNOWN,
+                                   GLFW_GESTURE_PHASE_NONE, 0);
+        return;
+    }
+
     if (window->callbacks.scroll)
         window->callbacks.scroll((GLFWwindow*) window, xoffset, yoffset);
+}
+
+// Notifies shared code of a scroll event with its source, gesture phase and
+// modifiers (belluikit/glfw#13). Without an extended callback the plain one
+// gets the offsets, unless they are both zero, as before.
+//
+void _glfwInputScrollEx(_GLFWwindow* window, double xoffset, double yoffset,
+                        int source, int phase, int mods)
+{
+    assert(window != NULL);
+    assert(xoffset > -FLT_MAX);
+    assert(xoffset < FLT_MAX);
+    assert(yoffset > -FLT_MAX);
+    assert(yoffset < FLT_MAX);
+
+    if (window->callbacks.scrollEx)
+    {
+        window->callbacks.scrollEx((GLFWwindow*) window, xoffset, yoffset,
+                                   source, phase, mods);
+        return;
+    }
+
+    if ((xoffset != 0.0 || yoffset != 0.0) && window->callbacks.scroll)
+        window->callbacks.scroll((GLFWwindow*) window, xoffset, yoffset);
+}
+
+// Notifies shared code of a trackpad pinch step (belluikit/glfw#13)
+//
+void _glfwInputPinch(_GLFWwindow* window, double scale, int phase)
+{
+    assert(window != NULL);
+
+    if (window->callbacks.pinch)
+        window->callbacks.pinch((GLFWwindow*) window, scale, phase);
 }
 
 // Notifies shared code of a mouse button click event
@@ -1196,6 +1240,26 @@ GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* handle, GLFWtouchfun cbfun
 
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
     _GLFW_SWAP(GLFWtouchfun, window->callbacks.touch, cbfun);
+    return cbfun;
+}
+
+GLFWAPI GLFWscrollexfun glfwSetScrollExCallback(GLFWwindow* handle, GLFWscrollexfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP(GLFWscrollexfun, window->callbacks.scrollEx, cbfun);
+    return cbfun;
+}
+
+GLFWAPI GLFWpinchfun glfwSetPinchCallback(GLFWwindow* handle, GLFWpinchfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP(GLFWpinchfun, window->callbacks.pinch, cbfun);
     return cbfun;
 }
 

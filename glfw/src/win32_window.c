@@ -442,6 +442,26 @@ static void updateFramebufferTransparency(const _GLFWwindow* window)
 
 // Retrieves and translates modifier keys
 //
+static int getKeyMods(void);
+
+// Returns the modifiers of a wheel message: the keys held down, plus the
+// control and shift the message itself carries. A precision touchpad sends a
+// pinch as a wheel message with MK_CONTROL set and no key pressed
+// (belluikit/glfw#13)
+//
+static int getWheelMods(WPARAM wParam)
+{
+    int mods = getKeyMods();
+    const WORD keys = GET_KEYSTATE_WPARAM(wParam);
+
+    if (keys & MK_CONTROL)
+        mods |= GLFW_MOD_CONTROL;
+    if (keys & MK_SHIFT)
+        mods |= GLFW_MOD_SHIFT;
+
+    return mods;
+}
+
 static int getKeyMods(void)
 {
     int mods = 0;
@@ -1440,7 +1460,9 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
         case WM_MOUSEWHEEL:
         {
-            _glfwInputScroll(window, 0.0, (SHORT) HIWORD(wParam) / (double) WHEEL_DELTA);
+            _glfwInputScrollEx(window, 0.0, (SHORT) HIWORD(wParam) / (double) WHEEL_DELTA,
+                               GLFW_SCROLL_SOURCE_UNKNOWN, GLFW_GESTURE_PHASE_NONE,
+                               getWheelMods(wParam));
             return 0;
         }
 
@@ -1448,7 +1470,9 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
         {
             // This message is only sent on Windows Vista and later
             // NOTE: The X-axis is inverted for consistency with macOS and X11
-            _glfwInputScroll(window, -((SHORT) HIWORD(wParam) / (double) WHEEL_DELTA), 0.0);
+            _glfwInputScrollEx(window, -((SHORT) HIWORD(wParam) / (double) WHEEL_DELTA), 0.0,
+                               GLFW_SCROLL_SOURCE_UNKNOWN, GLFW_GESTURE_PHASE_NONE,
+                               getWheelMods(wParam));
             return 0;
         }
 
