@@ -371,6 +371,40 @@ extern "C" {
 #define GLFW_TOUCH_CANCEL           4
 /*! @} */
 
+/*! @defgroup scroll_sources Scroll sources
+ *  @brief The device a @ref GLFWscrollexfun scroll came from
+ *  (belluikit/glfw#13).
+ *  @{ */
+/*! @brief The platform does not say. */
+#define GLFW_SCROLL_SOURCE_UNKNOWN  0
+/*! @brief A mouse wheel, which scrolls in steps and has no gesture. */
+#define GLFW_SCROLL_SOURCE_WHEEL    1
+/*! @brief A touch surface scrolled with fingers: a trackpad, or a Magic
+ *  Mouse's top. Its scrolls form gestures with phases. */
+#define GLFW_SCROLL_SOURCE_TOUCHPAD 2
+/*! @} */
+
+/*! @defgroup gesture_phases Gesture phases
+ *  @brief Phases reported by a @ref GLFWscrollexfun or @ref GLFWpinchfun
+ *  (belluikit/glfw#13).
+ *  @{ */
+/*! @brief Not part of a gesture: a wheel step, or a platform that does not
+ *  report phases. */
+#define GLFW_GESTURE_PHASE_NONE      0
+/*! @brief The first event of a gesture: the fingers started moving. */
+#define GLFW_GESTURE_PHASE_BEGAN     1
+/*! @brief The fingers moved. */
+#define GLFW_GESTURE_PHASE_CHANGED   2
+/*! @brief The fingers lifted. The offsets are zero, or the scale 1. */
+#define GLFW_GESTURE_PHASE_ENDED     3
+/*! @brief The system took the gesture over, or the fingers lifted before it
+ *  moved; treat like an end. The offsets are zero, or the scale 1. */
+#define GLFW_GESTURE_PHASE_CANCELLED 4
+/*! @brief A scroll the system added after the fingers lifted, as the content
+ *  coasts to a stop. Never reported for pinches. */
+#define GLFW_GESTURE_PHASE_MOMENTUM  5
+/*! @} */
+
 /*! @defgroup hat_state Joystick hat states
  *  @brief Joystick hat states.
  *
@@ -2119,6 +2153,58 @@ typedef void (* GLFWdragfun)(GLFWwindow* window, int phase, double xpos, double 
  *  @ingroup input
  */
 typedef void (* GLFWtouchfun)(GLFWwindow* window, int touchID, int phase, double xpos, double ypos);
+
+/*! @brief The function pointer type for extended scroll callbacks.
+ *
+ *  This is the function pointer type for extended scroll callbacks, a
+ *  belluikit/glfw extension (belluikit/glfw#13). It reports what the plain
+ *  @ref GLFWscrollfun drops: the device, the gesture phase and the modifiers
+ *  on the event itself. An extended scroll callback has the following
+ *  signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, double xoffset, double yoffset, int source, int phase, int mods)
+ *  @endcode
+ *
+ *  @param[in] window The window that received the event.
+ *  @param[in] xoffset The scroll offset along the x-axis, as for
+ *  @ref GLFWscrollfun. Zero on `GLFW_GESTURE_PHASE_ENDED` and
+ *  `GLFW_GESTURE_PHASE_CANCELLED`, and possibly on `GLFW_GESTURE_PHASE_BEGAN`.
+ *  @param[in] yoffset The scroll offset along the y-axis, likewise.
+ *  @param[in] source One of the [scroll sources](@ref scroll_sources).
+ *  @param[in] phase One of the [gesture phases](@ref gesture_phases).
+ *  @param[in] mods The [modifier keys](@ref mods) the platform reports on the
+ *  event. These can differ from the keys held down: a Windows precision
+ *  touchpad sends a pinch as a wheel event with `GLFW_MOD_CONTROL` set and no
+ *  key pressed.
+ *
+ *  @sa @ref glfwSetScrollExCallback
+ *
+ *  @ingroup input
+ */
+typedef void (* GLFWscrollexfun)(GLFWwindow* window, double xoffset, double yoffset, int source, int phase, int mods);
+
+/*! @brief The function pointer type for pinch callbacks.
+ *
+ *  This is the function pointer type for pinch callbacks, a belluikit/glfw
+ *  extension (belluikit/glfw#13). It reports a two-finger pinch on a
+ *  trackpad. A pinch callback has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, double scale, int phase)
+ *  @endcode
+ *
+ *  @param[in] window The window that received the event.
+ *  @param[in] scale The change in size since the previous event of the same
+ *  pinch: above 1 the fingers moved apart, below 1 together. Multiply
+ *  successive values for the total. 1 on `GLFW_GESTURE_PHASE_ENDED` and
+ *  `GLFW_GESTURE_PHASE_CANCELLED`.
+ *  @param[in] phase `GLFW_GESTURE_PHASE_BEGAN`, `GLFW_GESTURE_PHASE_CHANGED`,
+ *  `GLFW_GESTURE_PHASE_ENDED` or `GLFW_GESTURE_PHASE_CANCELLED`.
+ *
+ *  @sa @ref glfwSetPinchCallback
+ *
+ *  @ingroup input
+ */
+typedef void (* GLFWpinchfun)(GLFWwindow* window, double scale, int phase);
 
 /*! @brief The function pointer type for monitor configuration callbacks.
  *
@@ -5933,6 +6019,85 @@ GLFWAPI GLFWdragfun glfwSetDragCallback(GLFWwindow* window, GLFWdragfun callback
  *  @ingroup input
  */
 GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* window, GLFWtouchfun callback);
+
+/*! @brief Sets the extended scroll callback.
+ *
+ *  This function sets the extended scroll callback of the specified window, a
+ *  belluikit/glfw extension (belluikit/glfw#13). It reports every scroll the
+ *  plain callback set with @ref glfwSetScrollCallback does, with its source,
+ *  gesture phase and modifiers, and also the zero-offset events that start,
+ *  end or cancel a gesture, which the plain callback never sees.
+ *
+ *  While an extended scroll callback is set it replaces the plain one, which
+ *  is not called, so no scroll is reported twice.
+ *
+ *  What each platform reports:
+ *  - macOS: the source (`GLFW_SCROLL_SOURCE_TOUCHPAD` for an event with a
+ *    gesture phase, otherwise `GLFW_SCROLL_SOURCE_WHEEL`), every phase, and
+ *    the modifiers.
+ *  - Wayland (a seat of version 5 or later): the source
+ *    (`GLFW_SCROLL_SOURCE_TOUCHPAD` for a finger scroll,
+ *    `GLFW_SCROLL_SOURCE_WHEEL` for a wheel), `GLFW_GESTURE_PHASE_BEGAN`,
+ *    `GLFW_GESTURE_PHASE_CHANGED`, `GLFW_GESTURE_PHASE_ENDED` at the axis stop,
+ *    `GLFW_GESTURE_PHASE_CANCELLED` when the pointer leaves mid-scroll, and the
+ *    modifiers. Wayland adds no coast after a finger scroll, so there is no
+ *    `GLFW_GESTURE_PHASE_MOMENTUM`.
+ *  - Windows: the modifiers, including those the wheel message itself
+ *    carries. The source is unknown and the phase none.
+ *  - X11: the modifiers. The source is unknown and the phase none.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
+ *  callback and go back to the plain one.
+ *  @return The previously set callback, or `NULL` if no callback was set or
+ *  the library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, double xoffset, double yoffset, int source, int phase, int mods)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWscrollexfun).
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWscrollexfun glfwSetScrollExCallback(GLFWwindow* window, GLFWscrollexfun callback);
+
+/*! @brief Sets the pinch callback.
+ *
+ *  This function sets the pinch callback of the specified window, a
+ *  belluikit/glfw extension (belluikit/glfw#13). It is called as two fingers
+ *  pinch on a trackpad over the window, with the change in size at each step.
+ *
+ *  Pinches are reported on macOS. Elsewhere the callback never fires: a
+ *  Windows precision touchpad sends a pinch to the window as ctrl+wheel
+ *  instead, which the extended scroll callback reports with
+ *  `GLFW_MOD_CONTROL`.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] callback The new pinch callback, or `NULL` to remove the
+ *  currently set callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or
+ *  the library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, double scale, int phase)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWpinchfun).
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWpinchfun glfwSetPinchCallback(GLFWwindow* window, GLFWpinchfun callback);
 
 /*! @brief Returns whether the specified joystick is present.
  *

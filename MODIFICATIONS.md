@@ -32,27 +32,27 @@ Alterations made by go-gl/glfw (carried unchanged here):
 
 Alterations made by this fork (github.com/belluikit/glfw):
 
-- `glfw/include/GLFW/glfw3.h`: public API for IME/preedit, generic MIME clipboard flavors, drag-motion callback (`glfwSetDragCallback`) and touch input (`glfwSetTouchCallback`).
+- `glfw/include/GLFW/glfw3.h`: public API for IME/preedit, generic MIME clipboard flavors, drag-motion callback (`glfwSetDragCallback`), touch input (`glfwSetTouchCallback`), and the extended scroll and pinch callbacks (`glfwSetScrollExCallback`, `glfwSetPinchCallback`, with the scroll-source and gesture-phase constants).
 - `glfw/include/GLFW/glfw3native.h`: native accessors for window parenting (X11/Wayland), window modality (X11, Wayland xdg-dialog-v1), xdg-foreign export handles and Wayland drag-out (`glfwStartWaylandDrag`).
 - `glfw/src/cocoa_init.m`: IME/preedit support; MIME clipboard flavors; no call to the undeclared `setAppleMenu:` (a Mac App Store private-API risk, #6).
 - `glfw/src/cocoa_platform.h`: IME/preedit support; MIME clipboard flavors.
-- `glfw/src/cocoa_window.m`: IME/preedit support and the correct input-context discard; MIME clipboard flavors; drag-motion callback.
+- `glfw/src/cocoa_window.m`: IME/preedit support and the correct input-context discard; MIME clipboard flavors; drag-motion callback; scroll source, gesture phases, momentum and modifiers, and trackpad pinch (`magnifyWithEvent:`).
 - `glfw/src/init.c`: IME/preedit support.
-- `glfw/src/input.c`: IME/preedit support; MIME clipboard flavors; drag-motion callback; touch input.
-- `glfw/src/internal.h`: IME/preedit support; MIME clipboard flavors; drag-motion callback; touch input.
+- `glfw/src/input.c`: IME/preedit support; MIME clipboard flavors; drag-motion callback; touch input; extended scroll and pinch callbacks.
+- `glfw/src/internal.h`: IME/preedit support; MIME clipboard flavors; drag-motion callback; touch input; extended scroll and pinch callbacks.
 - `glfw/src/null_init.c`: IME/preedit and MIME clipboard stubs for the null platform.
 - `glfw/src/null_platform.h`: IME/preedit and MIME clipboard stubs for the null platform.
 - `glfw/src/null_window.c`: IME/preedit and MIME clipboard stubs for the null platform.
 - `glfw/src/win32_init.c`: IME/preedit support; MIME clipboard flavors; OLE drop-target drag-motion; touch input.
 - `glfw/src/win32_platform.h`: IME/preedit support; MIME clipboard flavors; OLE drop-target drag-motion; touch input.
-- `glfw/src/win32_window.c`: IME/preedit support; MIME clipboard flavors; OLE drop-target drag-motion; touch input, including cancelling touches on teardown.
+- `glfw/src/win32_window.c`: IME/preedit support; MIME clipboard flavors; OLE drop-target drag-motion; touch input, including cancelling touches on teardown; wheel-message modifiers for the extended scroll callback.
 - `glfw/src/window.c`: IME/preedit support.
-- `glfw/src/wl_init.c`: IME (text-input protocols); MIME clipboard flavors; xdg-dialog modality; xdg-foreign export; drag-out; survive compositors without a seat; touch input.
-- `glfw/src/wl_platform.h`: IME (text-input protocols) and the preedit commit/done feedback-loop fix; MIME clipboard flavors; modality; xdg-foreign; drag-out; touch input.
-- `glfw/src/wl_window.c`: IME and the preedit feedback-loop fix; MIME clipboard flavors; window parenting and modality; xdg-foreign; drag-out; seatless-compositor and data-offer listener fixes (a crash in `glfwStartWaylandDrag`); NULL-window guard on drag enter; touch input.
+- `glfw/src/wl_init.c`: IME (text-input protocols); MIME clipboard flavors; xdg-dialog modality; xdg-foreign export; drag-out; survive compositors without a seat; touch input; the seat bound at version 5 for pointer frames, axis sources and axis stops.
+- `glfw/src/wl_platform.h`: IME (text-input protocols) and the preedit commit/done feedback-loop fix; MIME clipboard flavors; modality; xdg-foreign; drag-out; touch input; the seat version and the pointer frame's scroll.
+- `glfw/src/wl_window.c`: IME and the preedit feedback-loop fix; MIME clipboard flavors; window parenting and modality; xdg-foreign; drag-out; seatless-compositor and data-offer listener fixes (a crash in `glfwStartWaylandDrag`); NULL-window guard on drag enter; touch input; pointer frames, axis sources and axis stops for the extended scroll callback.
 - `glfw/src/x11_init.c`: IME/preedit support; MIME clipboard flavors; window modality; drag-motion callback.
 - `glfw/src/x11_platform.h`: IME/preedit support; MIME clipboard flavors; window modality; drag-motion callback.
-- `glfw/src/x11_window.c`: IME/preedit support; MIME clipboard flavors; window parenting and modality; reaping INCR clipboard transfers to a requestor that went away; drag-motion callback.
+- `glfw/src/x11_window.c`: IME/preedit support; MIME clipboard flavors; window parenting and modality; reaping INCR clipboard transfers to a requestor that went away; drag-motion callback; scroll modifiers for the extended scroll callback.
 
 The IME/preedit support is a port of the unmerged upstream pull request
 [glfw/glfw#2130](https://github.com/glfw/glfw/pull/2130).

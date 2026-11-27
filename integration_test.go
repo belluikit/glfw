@@ -285,3 +285,78 @@ func TestStartWaylandDragNoCrash(t *testing.T) {
 	// Reaching here means the drag was started and the process survived the
 	// subsequent event dispatch — the glfw#14 crash did not recur.
 }
+
+// TestWaylandScrollExReportsFingerGesture covers belluikit/glfw#13 on
+// Wayland: with the seat bound at version 5, a finger scroll reaches the
+// extended scroll callback as a touchpad gesture that begins, changes and
+// ends at its axis stop, and a wheel step as a wheel with no phase. The
+// virtual-pointer injector sends both through a real wlroots compositor.
+func TestWaylandScrollExReportsFingerGesture(t *testing.T) {
+	var wayland bool
+	do(func() { wayland = glfw.GetPlatform() == glfw.PlatformWayland })
+	if !wayland {
+		t.Skip("Wayland-only")
+	}
+	injector := os.Getenv("GLFW_TEST_VPTR_INJECT")
+	if injector == "" {
+		t.Skip("no GLFW_TEST_VPTR_INJECT injector (needs zwlr_virtual_pointer, e.g. sway)")
+	}
+
+	var w *glfw.Window
+	var err error
+	do(func() {
+		glfw.DefaultWindowHints()
+		glfw.WindowHint(glfw.Visible, glfw.True)
+		w, err = glfw.CreateWindow(800, 600, t.Name(), nil, nil)
+	})
+	if err != nil {
+		t.Fatalf("CreateWindow: %v", err)
+	}
+	t.Cleanup(func() { do(w.Destroy) })
+
+	type scroll struct {
+		y      float64
+		source glfw.ScrollSource
+		phase  glfw.GesturePhase
+	}
+	var got []scroll
+	do(func() {
+		w.MakeContextCurrent()
+		w.SetScrollExCallback(func(_ *glfw.Window, _, y float64, s glfw.ScrollSource, p glfw.GesturePhase, _ glfw.ModifierKey) {
+			got = append(got, scroll{y, s, p})
+		})
+		w.SwapBuffers()
+	})
+
+	inj := exec.Command(injector, "scroll")
+	inj.Env = os.Environ()
+	if err := inj.Start(); err != nil {
+		t.Skipf("cannot start injector: %v", err)
+	}
+	defer func() { _ = inj.Process.Kill() }()
+
+	deadline := time.Now().Add(4 * time.Second)
+	do(func() {
+		for time.Now().Before(deadline) {
+			glfw.WaitEventsTimeout(0.05)
+			w.SwapBuffers()
+		}
+	})
+	_ = inj.Wait()
+
+	want := []scroll{
+		{-1, glfw.ScrollSourceWheel, glfw.GesturePhaseNone},
+		{-0.5, glfw.ScrollSourceTouchpad, glfw.GesturePhaseBegan},
+		{-0.5, glfw.ScrollSourceTouchpad, glfw.GesturePhaseChanged},
+		{-0.5, glfw.ScrollSourceTouchpad, glfw.GesturePhaseChanged},
+		{0, glfw.ScrollSourceTouchpad, glfw.GesturePhaseEnded},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("scrolls: got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("scroll %d: got %+v, want %+v (all: %v)", i, got[i], want[i], got)
+		}
+	}
+}

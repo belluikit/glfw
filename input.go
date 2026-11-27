@@ -14,6 +14,8 @@ package glfw
 //void glfwSetDropCallbackCB(GLFWwindow *window);
 //void glfwSetDragCallbackCB(GLFWwindow *window);
 //void glfwSetTouchCallbackCB(GLFWwindow *window);
+//void glfwSetScrollExCallbackCB(GLFWwindow *window);
+//void glfwSetPinchCallbackCB(GLFWwindow *window);
 //void glfwSetPreeditCallbackCB(GLFWwindow *window);
 //void glfwSetIMEStatusCallbackCB(GLFWwindow *window);
 //float GetAxisAtIndex(float *axis, int i);
@@ -405,6 +407,18 @@ func goDragCB(window unsafe.Pointer, phase C.int, xpos C.double, ypos C.double) 
 func goTouchCB(window unsafe.Pointer, touchID C.int, phase C.int, xpos C.double, ypos C.double) {
 	w := windows.get((*C.GLFWwindow)(window))
 	w.fTouchHolder(w, int(touchID), TouchPhase(phase), float64(xpos), float64(ypos))
+}
+
+//export goScrollExCB
+func goScrollExCB(window unsafe.Pointer, xoff, yoff C.double, source, phase, mods C.int) {
+	w := windows.get((*C.GLFWwindow)(window))
+	w.fScrollExHolder(w, float64(xoff), float64(yoff), ScrollSource(source), GesturePhase(phase), ModifierKey(mods))
+}
+
+//export goPinchCB
+func goPinchCB(window unsafe.Pointer, scale C.double, phase C.int) {
+	w := windows.get((*C.GLFWwindow)(window))
+	w.fPinchHolder(w, float64(scale), GesturePhase(phase))
 }
 
 //export goPreeditCB
@@ -881,6 +895,104 @@ func (w *Window) SetTouchCallback(cbfun TouchCallback) (previous TouchCallback) 
 		C.glfwSetTouchCallback(w.data, nil)
 	} else {
 		C.glfwSetTouchCallbackCB(w.data)
+	}
+	panicError()
+	return previous
+}
+
+// ScrollSource is the device a scroll reported to a ScrollExCallback came
+// from (belluikit/glfw#13).
+type ScrollSource int
+
+// Scroll sources.
+const (
+	// ScrollSourceUnknown: the platform does not say.
+	ScrollSourceUnknown ScrollSource = C.GLFW_SCROLL_SOURCE_UNKNOWN
+	// ScrollSourceWheel: a mouse wheel, which scrolls in steps and has no
+	// gesture.
+	ScrollSourceWheel ScrollSource = C.GLFW_SCROLL_SOURCE_WHEEL
+	// ScrollSourceTouchpad: a touch surface scrolled with fingers, a
+	// trackpad or a Magic Mouse's top. Its scrolls form gestures with phases.
+	ScrollSourceTouchpad ScrollSource = C.GLFW_SCROLL_SOURCE_TOUCHPAD
+)
+
+// GesturePhase is the stage of a trackpad gesture reported to a
+// ScrollExCallback or a PinchCallback (belluikit/glfw#13).
+type GesturePhase int
+
+// Gesture phases.
+const (
+	// GesturePhaseNone: not part of a gesture, a wheel step, or a platform
+	// that does not report phases.
+	GesturePhaseNone GesturePhase = C.GLFW_GESTURE_PHASE_NONE
+	// GesturePhaseBegan: the first event of a gesture, as the fingers start
+	// moving.
+	GesturePhaseBegan GesturePhase = C.GLFW_GESTURE_PHASE_BEGAN
+	// GesturePhaseChanged: the fingers moved.
+	GesturePhaseChanged GesturePhase = C.GLFW_GESTURE_PHASE_CHANGED
+	// GesturePhaseEnded: the fingers lifted. The offsets are zero, or the
+	// scale 1.
+	GesturePhaseEnded GesturePhase = C.GLFW_GESTURE_PHASE_ENDED
+	// GesturePhaseCancelled: the system took the gesture over, or the
+	// fingers lifted before it moved; treat it like an end.
+	GesturePhaseCancelled GesturePhase = C.GLFW_GESTURE_PHASE_CANCELLED
+	// GesturePhaseMomentum: a scroll the system added after the fingers
+	// lifted, as the content coasts to a stop. Never reported for pinches.
+	GesturePhaseMomentum GesturePhase = C.GLFW_GESTURE_PHASE_MOMENTUM
+)
+
+// ScrollExCallback is the extended scroll callback. xoff and yoff are as
+// for a ScrollCallback, and zero at the end of a gesture. mods are the
+// modifiers the platform reports on the event itself, which can differ from
+// the keys held down: a Windows precision touchpad sends a pinch as a wheel
+// event with ModControl set and no key pressed. See SetScrollExCallback.
+type ScrollExCallback func(w *Window, xoff, yoff float64, source ScrollSource, phase GesturePhase, mods ModifierKey)
+
+// SetScrollExCallback sets the extended scroll callback, a belluikit/glfw
+// extension (belluikit/glfw#13). It reports every scroll the plain callback
+// does, with its source, gesture phase and modifiers, and also the
+// zero-offset events that start, end or cancel a gesture.
+//
+// While it is set it replaces the callback set with SetScrollCallback, which
+// is not called, so no scroll is reported twice; pass nil to go back to it.
+//
+// macOS reports the source (touchpad for an event with a gesture phase,
+// otherwise wheel), every phase and the modifiers. Wayland reports the source
+// (touchpad for a finger scroll, wheel for a wheel), began, changed, ended at
+// the axis stop and cancelled when the pointer leaves mid-scroll, but no
+// momentum, since Wayland adds no coast. Windows and X11 report the
+// modifiers, with the source unknown and the phase none; on Windows they
+// include the control and shift the wheel message carries.
+func (w *Window) SetScrollExCallback(cbfun ScrollExCallback) (previous ScrollExCallback) {
+	previous = w.fScrollExHolder
+	w.fScrollExHolder = cbfun
+	if cbfun == nil {
+		C.glfwSetScrollExCallback(w.data, nil)
+	} else {
+		C.glfwSetScrollExCallbackCB(w.data)
+	}
+	panicError()
+	return previous
+}
+
+// PinchCallback is the pinch callback. scale is the change in size since the
+// previous event of the same pinch: above 1 the fingers moved apart, below 1
+// together; multiply successive values for the total. It is 1 when the
+// gesture ends or is cancelled. See SetPinchCallback.
+type PinchCallback func(w *Window, scale float64, phase GesturePhase)
+
+// SetPinchCallback sets the pinch callback, a belluikit/glfw extension
+// (belluikit/glfw#13), called as two fingers pinch on a trackpad over the
+// window. Pinches are reported on macOS; elsewhere the callback never fires.
+// A Windows precision touchpad sends a pinch as ctrl+wheel instead, which the
+// extended scroll callback reports with ModControl.
+func (w *Window) SetPinchCallback(cbfun PinchCallback) (previous PinchCallback) {
+	previous = w.fPinchHolder
+	w.fPinchHolder = cbfun
+	if cbfun == nil {
+		C.glfwSetPinchCallback(w.data, nil)
+	} else {
+		C.glfwSetPinchCallbackCB(w.data)
 	}
 	panicError()
 	return previous

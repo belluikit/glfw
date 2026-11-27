@@ -1514,6 +1514,16 @@ static void pointerHandleLeave(void* userData,
     if (!window)
         return;
 
+    // A finger scroll the pointer takes away ends here (belluikit/glfw#13)
+    if (_glfw.wl.scroll.gesture)
+    {
+        _glfw.wl.scroll.gesture = GLFW_FALSE;
+        _glfwInputScrollEx(window, 0.0, 0.0, GLFW_SCROLL_SOURCE_TOUCHPAD,
+                           GLFW_GESTURE_PHASE_CANCELLED, _glfw.wl.xkb.modifiers);
+    }
+    _glfw.wl.scroll.x = _glfw.wl.scroll.y = 0.0;
+    _glfw.wl.scroll.moved = _glfw.wl.scroll.stopped = GLFW_FALSE;
+
     _glfw.wl.serial = serial;
     _glfw.wl.pointerFocus = NULL;
     _glfw.wl.cursorPreviousName = NULL;
@@ -1726,10 +1736,105 @@ static void pointerHandleAxis(void* userData,
         return;
 
     // NOTE: 10 units of motion per mouse wheel step seems to be a common ratio
+    const double offset = -wl_fixed_to_double(value) / 10.0;
+
+    // From seat version 5 the frame that follows says where the scroll came
+    // from, so gather it until then (belluikit/glfw#13)
+    if (_glfw.wl.seatVersion >= WL_POINTER_FRAME_SINCE_VERSION)
+    {
+        if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL)
+            _glfw.wl.scroll.x += offset;
+        else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
+            _glfw.wl.scroll.y += offset;
+        _glfw.wl.scroll.moved = GLFW_TRUE;
+        return;
+    }
+
+    // An older seat has no frames: the source and the end of a finger scroll
+    // are not known
     if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL)
-        _glfwInputScroll(window, -wl_fixed_to_double(value) / 10.0, 0.0);
+        _glfwInputScrollEx(window, -wl_fixed_to_double(value) / 10.0, 0.0,
+                           GLFW_SCROLL_SOURCE_UNKNOWN, GLFW_GESTURE_PHASE_NONE,
+                           _glfw.wl.xkb.modifiers);
     else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
-        _glfwInputScroll(window, 0.0, -wl_fixed_to_double(value) / 10.0);
+        _glfwInputScrollEx(window, 0.0, -wl_fixed_to_double(value) / 10.0,
+                           GLFW_SCROLL_SOURCE_UNKNOWN, GLFW_GESTURE_PHASE_NONE,
+                           _glfw.wl.xkb.modifiers);
+}
+
+// Reports the scroll a pointer frame gathered as one extended scroll: a
+// finger scroll begins with its first movement and ends at its axis stop; a
+// wheel has no phase. Wayland adds no coast after a finger scroll, so it is
+// never reported as momentum (belluikit/glfw#13)
+//
+static void pointerHandleFrame(void* userData, struct wl_pointer* pointer)
+{
+    _GLFWwindow* window = _glfw.wl.pointerFocus;
+    const double x = _glfw.wl.scroll.x, y = _glfw.wl.scroll.y;
+    const GLFWbool moved = _glfw.wl.scroll.moved;
+    const GLFWbool stopped = _glfw.wl.scroll.stopped;
+
+    _glfw.wl.scroll.x = _glfw.wl.scroll.y = 0.0;
+    _glfw.wl.scroll.moved = _glfw.wl.scroll.stopped = GLFW_FALSE;
+
+    if (!window)
+        return;
+
+    const int mods = _glfw.wl.xkb.modifiers;
+
+    if (_glfw.wl.scroll.source == WL_POINTER_AXIS_SOURCE_FINGER)
+    {
+        if (moved)
+        {
+            const int phase = _glfw.wl.scroll.gesture ? GLFW_GESTURE_PHASE_CHANGED
+                                                      : GLFW_GESTURE_PHASE_BEGAN;
+            _glfw.wl.scroll.gesture = GLFW_TRUE;
+            _glfwInputScrollEx(window, x, y, GLFW_SCROLL_SOURCE_TOUCHPAD, phase, mods);
+        }
+
+        if (stopped && _glfw.wl.scroll.gesture)
+        {
+            _glfw.wl.scroll.gesture = GLFW_FALSE;
+            _glfwInputScrollEx(window, 0.0, 0.0, GLFW_SCROLL_SOURCE_TOUCHPAD,
+                               GLFW_GESTURE_PHASE_ENDED, mods);
+        }
+        return;
+    }
+
+    if (!moved)
+        return;
+
+    int source = GLFW_SCROLL_SOURCE_UNKNOWN;
+    if (_glfw.wl.scroll.source == WL_POINTER_AXIS_SOURCE_WHEEL ||
+        _glfw.wl.scroll.source == WL_POINTER_AXIS_SOURCE_WHEEL_TILT)
+    {
+        source = GLFW_SCROLL_SOURCE_WHEEL;
+    }
+
+    _glfwInputScrollEx(window, x, y, source, GLFW_GESTURE_PHASE_NONE, mods);
+}
+
+static void pointerHandleAxisSource(void* userData,
+                                    struct wl_pointer* pointer,
+                                    uint32_t source)
+{
+    _glfw.wl.scroll.source = source;
+}
+
+static void pointerHandleAxisStop(void* userData,
+                                  struct wl_pointer* pointer,
+                                  uint32_t time,
+                                  uint32_t axis)
+{
+    _glfw.wl.scroll.stopped = GLFW_TRUE;
+}
+
+static void pointerHandleAxisDiscrete(void* userData,
+                                      struct wl_pointer* pointer,
+                                      uint32_t axis,
+                                      int32_t discrete)
+{
+    // The same frame carries the axis value, which is what GLFW reports
 }
 
 static const struct wl_pointer_listener pointerListener =
@@ -1739,6 +1844,10 @@ static const struct wl_pointer_listener pointerListener =
     pointerHandleMotion,
     pointerHandleButton,
     pointerHandleAxis,
+    pointerHandleFrame,
+    pointerHandleAxisSource,
+    pointerHandleAxisStop,
+    pointerHandleAxisDiscrete,
 };
 
 static void keyboardHandleKeymap(void* userData,
